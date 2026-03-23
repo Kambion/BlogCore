@@ -1,0 +1,48 @@
+name: .NET CI Pipeline
+# Definicja wyzwalaczy (Triggers)
+on:
+push:
+branches: [ "main" ]
+pull_request:
+branches: [ "main" ]
+jobs:
+build-and-test:
+# Wybór Runnera z zainstalowanym Dockerem
+runs-on: ubuntu-latest
+steps:
+# 1. Pobranie kodu z repozytorium
+- name: Checkout code
+uses: actions/checkout@v4
+# 2. Instalacja środowiska .NET
+- name: Setup .NET
+uses: actions/setup-dotnet@v4
+with:
+dotnet-version: 9.0.x
+# 3. Buforowanie zależności NuGet (przyspiesza kolejne uruchomienia)
+- name: Cache NuGet packages
+uses: actions/cache@v4
+with:
+path: ~/.nuget/packages
+key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+restore-keys: |
+${{ runner.os }}-nuget-
+# 4. Przywrócenie pakietów NuGet (Bogus, Testcontainers, Respawn)
+- name: Restore dependencies
+run: dotnet restore
+# 5. Kompilacja całego rozwiązania w trybie Release
+- name: Build solution
+run: dotnet build --no-restore --configuration Release
+# 6. Uruchomienie testów funkcjonalnych
+# Testcontainers automatycznie uruchomi SQL Server w Dockerze na Runnerze
+- name: Run Functional Tests
+run: dotnet test --no-build --configuration Release --logger
+"trx;LogFileName=test_results.trx"
+# 7. Przygotowanie wersji instalacyjnej aplikacji (Publish)
+- name: Publish Application
+run: dotnet publish --configuration Release --output ./publish
+# 8. Zapisanie skompilowanej aplikacji jako artefakt do pobrania
+- name: Upload Build Artifact
+uses: actions/upload-artifact@v4
+with:
+name: BlogCore-Binary
+path: ./publish
