@@ -35,14 +35,19 @@ jobs:
       # 4. Przywrócenie pakietów
       - name: Restore dependencies
         run: dotnet restore
+        
+      - name: Static Analysis (Linting)
+        run: dotnet format --verify-no-changes
+      - name: Security Scan (Dependencies)
+        run: dotnet list package --vulnerable
 
       # 5. Kompilacja
       - name: Build solution
         run: dotnet build --no-restore --configuration Release
 
       # 6. Testy
-      - name: Run Functional Tests
-        run: dotnet test --no-build --configuration Release --logger "trx;LogFileName=test_results.trx"
+      - name: Run Tests with Coverage
+        run: dotnet test --configuration Release --logger "trx;LogFileName=test_results.trx" /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
 
       # 7. Publish
       - name: Publish Application
