@@ -40,7 +40,7 @@ namespace BlogCore.DAL.Tests
             _repository.AddPost(newPost);
             var after = _repository.GetAllPosts().Count();
             // Assert
-            Assert.AreEqual(5, after - before);
+            Assert.AreEqual(1, after - before);
         }
 
         [TestMethod]
